@@ -8,6 +8,12 @@ and classifies each leaf as `healthy`, `chlorosis` (yellowing), `blight`
 recommended action. The evaluation is honest: it holds out whole parameter
 ranges so the reported number reflects real generalisation, not a memorised 1.0.
 
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+---
+
 ## Why it matters
 
 Most "AI plant doctor" demos reach for a pretrained CNN and report ~99%
