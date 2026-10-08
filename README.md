@@ -161,4 +161,4 @@ report against that real-world held-out set.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE) © Angelo David Padilla Romero
