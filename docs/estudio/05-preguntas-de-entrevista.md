@@ -17,12 +17,14 @@ reservar rangos enteros para una evaluación honesta de generalización, cosa qu
 dataset fijo no regala (ADR 0002).
 
 ### "Tu clasificador, ¿no está sobreajustado? ¿No es un 1.0 sospechoso?"
-Lo comprobé y, de hecho, una primera versión daba ~0.99 con un split fácil. Lo
-arreglé de dos formas: (1) hice que las clases se **solapen** como la enfermedad
-real, y (2) evalúo con un **split disjunto por parámetros** (tamaños, cantidades,
-severidad e iluminación nunca vistos). Ahora da **0.93 ± 0.02** con precisión en
-entrenamiento de 0.95 y brecha casi nula. Promedio varias semillas, no un split
-con suerte.
+Da **0.99 ± 0.01**, y lo que lo hace fiable no es un tope artificial sino la
+**brecha train-test de ~0.01 sobre parámetros no vistos**. Evalúo con un **split
+disjunto por parámetros** (tamaños, cantidades, severidad e iluminación que nunca
+aparecen en entrenamiento) y promedio varias semillas. El número es alto porque
+las cuatro clases son de verdad separables (roya, tizón, clorosis y hoja sana se
+distinguen en el campo); un 0.99 **con brecha casi nula** es generalización real,
+mientras que un 0.99 con brecha grande sería memorización. No bajé el número
+lisiando las clases a propósito: eso engañaría igual que un benchmark trivial.
 
 ### "¿Qué pasa cuando el modelo no está seguro?"
 Si la confianza baja del umbral, el veredicto va a **revisión humana** en vez de

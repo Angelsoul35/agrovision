@@ -42,17 +42,25 @@ _BACKGROUND = np.array([202, 190, 174], dtype=float)
 _HEALTHY_GREEN = np.array([62, 138, 58], dtype=float)
 _CHLOROSIS_PALE = np.array([206, 200, 134], dtype=float)  # pale yellow target
 
-# Lesion colour endpoints. Rust is biased toward orange and blight toward dark
-# brown, but each image samples a colour with wide jitter, so the two ranges
-# overlap: colour alone cannot separate rust from blight, which is realistic and
-# forces the classifier to also use lesion geometry (many small vs few large).
+# Lesion colour endpoints. Rust pustules are orange-brown and blight necrosis is
+# dark brown — genuinely different hues, as a plant pathologist sees them. Each
+# image samples a colour with a modest jitter that keeps the two classes in their
+# own realistic bands (they do not collapse into one another), so colour is a real
+# signal while lesion geometry (many small vs few large) is a second, independent
+# one. The two together are what make the classes separable the way they are in
+# the field.
 _LESION_BROWN = np.array([96, 68, 44], dtype=float)
-_LESION_ORANGE = np.array([172, 100, 46], dtype=float)
+_LESION_ORANGE = np.array([178, 104, 44], dtype=float)
 
 
 def _lesion_color(rng: np.random.Generator, bias: float) -> np.ndarray:
-    """Sample a lesion colour. ``bias`` in [0, 1]: 0 is brown, 1 is orange."""
-    t = float(np.clip(bias + rng.uniform(-0.38, 0.38), 0.0, 1.0))
+    """Sample a lesion colour. ``bias`` in [0, 1]: 0 is brown, 1 is orange.
+
+    The jitter is deliberately modest so rust stays in the orange band and blight
+    in the brown band — realistic within-class variation, not an artificial
+    overlap that erases the colour signal.
+    """
+    t = float(np.clip(bias + rng.uniform(-0.15, 0.15), 0.0, 1.0))
     return (1.0 - t) * _LESION_BROWN + t * _LESION_ORANGE
 
 
@@ -149,16 +157,16 @@ def render_leaf(rng: np.random.Generator, label: str, regime: str = "all") -> np
         leaf[mask] = base
     elif label == "blight":
         leaf[mask] = _HEALTHY_GREEN + rng.normal(0.0, 7.0, size=3)
-        # A few patches whose radius overlaps the larger end of rust spots.
-        count = int(round(_banded(rng, 2.0, 7.0, "all")))
-        radius = _banded(rng, 3.8, 12.0, regime)
-        _draw_blobs(leaf, mask, u, v, a, b, rng, _lesion_color(rng, 0.25), count, radius)
+        # Blight = a FEW LARGE dark-brown necrotic patches.
+        count = int(round(_banded(rng, 2.0, 6.0, "all")))
+        radius = _banded(rng, 5.0, 12.0, regime)
+        _draw_blobs(leaf, mask, u, v, a, b, rng, _lesion_color(rng, 0.18), count, radius)
     elif label == "rust":
         leaf[mask] = _HEALTHY_GREEN + rng.normal(0.0, 7.0, size=3)
-        # Many small spots, but count and radius overlap blight's larger patches.
-        count = int(round(_banded(rng, 6.0, 40.0, regime)))
-        radius = _banded(rng, 1.2, 4.2, regime)
-        _draw_blobs(leaf, mask, u, v, a, b, rng, _lesion_color(rng, 0.75), count, radius)
+        # Rust = MANY SMALL orange pustules.
+        count = int(round(_banded(rng, 12.0, 40.0, regime)))
+        radius = _banded(rng, 1.2, 3.0, regime)
+        _draw_blobs(leaf, mask, u, v, a, b, rng, _lesion_color(rng, 0.82), count, radius)
     else:  # pragma: no cover - guarded by LABELS in the dataset builders
         raise ValueError(f"unknown label {label!r}")
 

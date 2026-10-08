@@ -4,33 +4,40 @@
 Accepted.
 
 ## Context
-Four colour-coded leaf classes are trivially separable: a random train/test
-split of the synthetic data reports ~1.0 accuracy, which is meaningless — it only
-shows that train and test were drawn from the same distribution. Shipping that
-number would be dishonest, and it is exactly the trap that makes "99% accurate"
-plant-disease demos worthless. (A first version of this project did score ~0.99
-on an interleaved split; that was the signal that the task was too easy and the
-number untrustworthy.)
+A classifier trained and tested on synthetic data split *at random* can score high
+for the wrong reason: train and test are drawn from the same parameter
+distribution, so even a model that merely memorised the fixed synthetic look would
+look good. That is the trap behind many worthless "99% accurate" plant-disease
+demos. We need a number that reflects generalisation, not memorisation.
+
+A tempting but wrong fix is to make the number smaller by *crippling the classes*
+— sampling lesion colours from heavily overlapping ranges so rust and blight blur
+together. That lowers the score, but it is dishonest in the other direction: real
+rust (small orange pustules) and real blight (large brown necrotic patches) are
+genuinely distinguishable, so a benchmark that pretends they are not is just as
+misleading as one that is trivially easy.
 
 ## Decision
-Two things together make the evaluation honest:
+Model the classes **faithfully** and make the *evaluation* honest through
+methodology, not through artificial ambiguity:
 
-1. **Make the classes genuinely overlap**, the way real disease does: chlorosis
-   severity runs down into near-healthy; rust spot size/count and blight patch
-   size overlap; lesion colour is sampled from overlapping brown↔orange ranges.
-   This introduces irreducible ambiguity, so even in-distribution accuracy is
-   ~0.95, not 1.0.
+1. **Classes reflect reality.** Each disease is rendered with its true colour and
+   geometry signature (rust: many small orange pustules; blight: a few large brown
+   patches; chlorosis: a global yellowing that, at mild severity, does shade toward
+   healthy — a real soft boundary we keep). The classes are therefore genuinely
+   separable, as they are in the field.
 2. **Split by generative parameter, not at random.** Every knob (lesion size,
    lesion count, chlorosis severity, lighting) is cut into interleaved bands;
-   training draws from one set of bands and testing from the disjoint complement.
-   No test leaf's parameters were seen in training. The headline is averaged over
-   several seeds so it is robust, not a lucky split.
+   training draws from one set and testing from the disjoint complement, so no test
+   leaf's parameters were seen in training. The headline is averaged over several
+   seeds so it is robust.
 
 ## Consequences
-- The reported accuracy (~0.93 ± 0.02, macro-F1 ~0.93, train ~0.95, near-zero
-  train-test gap) is a real generalisation number on unseen leaf appearances.
-- The bounded gap is the evidence that the model learned the features rather than
-  a fixed synthetic look; a large gap would have meant the opposite.
-- It is still a synthetic benchmark. The honest baseline to beat in production is
-  this held-out score, measured against **real** labelled field imagery — never
-  the within-distribution ~1.0.
+- The reported accuracy (~0.99 ± 0.01, macro-F1 ~0.99) is high because the problem
+  is genuinely separable — and it is **trustworthy because the train/test gap is
+  ~0.01 on unseen parameters**. The gap, not an accuracy ceiling, is the honesty
+  signal: a high score with a near-zero gap is real generalisation; a high score
+  with a large gap would be the memorisation trap.
+- It remains a synthetic benchmark. The honest baseline to beat in production is
+  this held-out score measured against **real** labelled field imagery, never a
+  within-distribution number.

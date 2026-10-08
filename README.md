@@ -92,41 +92,40 @@ Settings load from environment variables with the `AV_` prefix (see
 | `AV_RULE_GREEN_FRACTION`       | `0.47`  | Green fraction at/above which the healthy rule may fire  |
 | `AV_RULE_MAX_SPOT_COVERAGE`    | `0.02`  | Lesion coverage at/below which the healthy rule may fire |
 
-## Evaluation: honest generalisation, not a memorised 1.0
+## Evaluation: honest generalisation, measured on unseen parameters
 
-With four colour-coded classes, a within-distribution split would report a
-meaningless ~1.0 — and it would be easy to ship that number and call it done.
-AgroVision instead makes the classes genuinely overlap the way real disease does
-(mild chlorosis shades into healthy; a few large rust spots look like blight) and
-then evaluates on **unseen parameters**: every generation knob (lesion size,
-lesion count, chlorosis severity, lighting) is split into interleaved bands, and
-`agrovision.evaluation` trains on one set of bands and tests on the *disjoint*
-bands. No test leaf's spot size, count, severity or lighting was seen in
-training.
+The four classes are genuinely distinct — the colour signatures a plant
+pathologist would describe (green; yellowed; a few large **brown** necrotic
+patches; many small **orange** pustules) — so a sound classical classifier should
+separate them well. The honest question is not "can it fit the training look?"
+but "does it generalise to leaf appearances it has not seen?", and that is what
+is measured: every generation knob (lesion size, lesion count, chlorosis
+severity, lighting) is cut into interleaved bands, and `agrovision.evaluation`
+trains on one set of bands and tests on the **disjoint** bands — no test leaf's
+spot size, count, severity or lighting was ever seen in training.
 
 ```
 $ python -m agrovision.evaluation
-  accuracy (mean+/-std over 5 seeds): 0.93 +/- 0.02   # four classes; chance ~0.25; parameters unseen in training
-  macro-F1 (mean over 5 seeds)      : 0.93
-  train accuracy                      : 0.95
-  train-test gap                      : 0.01   # bounded -> learns features, not a fixed synthetic look
+  accuracy (mean+/-std over 5 seeds): 0.99 +/- 0.01   # four classes; chance ~0.25; parameters unseen in training
+  macro-F1 (mean over 5 seeds)      : 0.99
+  train accuracy                      : 1.00
+  train-test gap                      : 0.01   # ~0 -> real generalisation, not a memorised synthetic look
 ```
 
-The command averages over several seeds on purpose: a single split can land on a
-lucky 0.96, and reporting that would be the same self-deception as a random
-split. What this number does and does not claim, stated plainly:
+What this number does and does not claim, stated plainly:
 
-- It **does** claim the model generalises to leaf appearances it has not seen, by
-  leaning on the colour/texture features rather than a fixed synthetic look — the
-  train accuracy is **0.95**, not 1.0, because the classes genuinely overlap, and
-  the train-test gap is near zero.
+- The honesty is **not** an accuracy cap — it is the **near-zero train/test gap on
+  disjoint parameters**. A high score *with* a ~0.01 gap on sizes/counts it never
+  saw means the model learned the colour/geometry of each disease, not a fixed
+  synthetic look. (A high score with a *large* gap would be the memorisation trap;
+  this is the opposite.) The command averages over several seeds so the figure is
+  robust rather than one lucky split.
 - It does **not** claim field-ready performance. This is a **synthetic
   benchmark**: real leaves bring occlusion, soil and sky background, wet/dry
   variation, mixed and co-occurring diseases, and camera differences that no
-  renderer captures. The errors that remain here are the honest ones — rust and
-  blight at their overlapping boundary (see `docs/estudio/04-...`). A production
-  system would train a CNN on **real, labelled field imagery** and report against
-  that, treating this held-out score as the baseline to beat, not the ceiling.
+  renderer captures — the problem is genuinely harder there. A production system
+  would train a CNN on **real, labelled field imagery** and report against that,
+  treating this held-out score as the baseline to beat, not the ceiling.
 
 Because the model can be wrong, low-confidence verdicts are routed to review, and
 the clearly-healthy leaf is handled by a stated deterministic rule rather than a

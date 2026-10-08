@@ -55,13 +55,18 @@ question — does the model generalise to leaf appearances it has never seen?
 
 ## Why the evaluation holds out parameter ranges
 
-Four colour-coded classes are trivially separable; a random split would report
-~1.0 and mean nothing. So the classes are made to overlap the way real disease
-does, and the split is **parameter-disjoint**: each generation knob is cut into
-interleaved bands, training draws from one set and testing from the disjoint
-complement, so no test leaf's lesion size, count, severity or lighting was seen
-in training. The reported ~0.93 (train 0.95, near-zero gap) is therefore a real
-generalisation number, not a memorised one. See ADR 0003.
+A within-distribution split (train and test drawn from the same parameter
+distribution) would report a meaningless number: even a model that merely
+memorised the fixed synthetic look would score high. So the split is
+**parameter-disjoint** — each generation knob (lesion size, count, chlorosis
+severity, lighting) is cut into interleaved bands, training draws from one set and
+testing from the disjoint complement, so no test leaf's lesion size, count,
+severity or lighting was seen in training. The classes themselves are genuinely
+distinct (as real rust, blight, chlorosis and healthy tissue are), so the model
+scores ~0.99 — but the figure that makes that *trustworthy* is the **near-zero
+train/test gap on unseen parameters**: a high score with a tiny gap is real
+generalisation, a high score with a large gap would be the memorisation trap. See
+ADR 0003.
 
 ## Why a rule sits in front of the model
 

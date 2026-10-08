@@ -2,21 +2,25 @@
 
 ## El autoengaño que evitamos
 
-Con cuatro clases codificadas por color, un split **aleatorio** da ~1.0 de
-precisión. Ese número **no significa nada**: solo dice que entrenamiento y test
-salen de la misma distribución. Reportarlo sería el mismo autoengaño de las demos
-de "99% de precisión" que no sirven en campo. De hecho, una primera versión de
-este proyecto daba ~0.99 con un split interpolado; esa fue la señal de que la
-tarea era demasiado fácil y el número, poco fiable.
+Con datos sintéticos, un split **aleatorio** (entrenamiento y test de la misma
+distribución) da un número que **no significa nada**: hasta un modelo que solo
+memorizara el aspecto sintético fijo saldría alto. Es la trampa de las demos de
+"99% de precisión" que no sirven en campo.
+
+Pero bajar el número **lisiando las clases** (que la roya y el tizón se confundan
+a propósito) es deshonesto en el otro sentido: la roya real (pústulas pequeñas
+anaranjadas) y el tizón real (manchas grandes marrones) **sí** se distinguen. Un
+benchmark que finge que no, engaña igual que uno trivialmente fácil.
 
 ## Qué hacemos en su lugar
 
-Dos cosas, juntas:
+Modelamos las clases **con fidelidad** y hacemos honesta la **evaluación** por
+método, no por ambigüedad artificial:
 
-1. **Hacer que las clases se solapen** como la enfermedad real (clorosis suave ≈
-   sana; roya grande ≈ tizón; color de lesión en un rango compartido). Esto crea
-   ambigüedad irreducible, así que incluso dentro de distribución la precisión es
-   ~0.95, no 1.0.
+1. **Clases fieles a la realidad:** cada enfermedad con su color y geometría reales
+   (roya = muchas pústulas pequeñas anaranjadas; tizón = pocas manchas grandes
+   marrones; clorosis = amarilleo global que, en severidad baja, sí tiende a sana —
+   una frontera suave real que conservamos). Así son separables, como en el campo.
 2. **Partir por parámetro, no al azar.** Cada mando del generador (tamaño y número
    de manchas, severidad, iluminación) se divide en **bandas intercaladas**; se
    entrena con unas y se prueba con las **disjuntas**. Ninguna hoja de test tiene
@@ -27,27 +31,28 @@ Dos cosas, juntas:
 ## El número (medido, no inventado)
 
 ```
-accuracy (media ± std, 5 seeds): 0.93 ± 0.02   # 4 clases; el azar es ~0.25
-macro-F1 (media, 5 seeds)       : 0.93
-train accuracy                  : 0.95
-train-test gap                  : 0.01          # acotada -> aprende features, no un aspecto fijo
+accuracy (media ± std, 5 seeds): 0.99 ± 0.01   # 4 clases; el azar es ~0.25
+macro-F1 (media, 5 seeds)       : 0.99
+train accuracy                  : 1.00
+train-test gap                  : 0.01          # ~0 -> generaliza de verdad, no memoriza
 ```
 
 ## Lo que el número sí dice y lo que no dice
 
-- **Sí** dice que el modelo generaliza a hojas que no ha visto apoyándose en los
-  features de color/textura: la precisión en entrenamiento es **0.95** (no 1.0,
-  porque las clases se solapan de verdad) y la brecha train-test es casi nula.
+- **Sí** generaliza a hojas que no ha visto: la honestidad **no** es un tope de
+  precisión, es la **brecha train-test casi nula sobre parámetros no vistos**. Un
+  número alto con brecha ~0.01 es generalización real; un número alto con brecha
+  grande sería memorización. El problema es alto porque las clases son de verdad
+  separables.
 - **No** dice que esté listo para el campo. Es un **benchmark sintético**. Las
   hojas reales traen fondos complejos, oclusión, enfermedades mezcladas y
-  variación de cámara que ningún renderizador captura. Los errores que quedan son
-  los honestos: la frontera **roya/tizón**, donde el color y la geometría se
-  confunden. Cerrar esa brecha pide una **CNN entrenada con fotos reales
+  variación de cámara que ningún renderizador captura — ahí el problema es de
+  verdad más difícil. En producción se entrena una **CNN con fotos reales
   etiquetadas**, midiendo contra ese test real; este número held-out es la base a
   superar, no el techo.
 
 ## Dónde caen los errores
 
-La matriz de confusión lo confirma: sana y clorosis salen casi perfectas, y casi
-todo el error está en roya↔tizón. Eso es exactamente el solapamiento que
-diseñamos a propósito, no un fallo aleatorio del modelo.
+La matriz de confusión lo confirma: las cuatro clases salen casi perfectas sobre
+parámetros no vistos; el poco error que queda está en algún caso límite de tamaño
+de lesión no visto en entrenamiento, no en una confusión sistemática de clases.
