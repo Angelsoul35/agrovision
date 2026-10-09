@@ -40,4 +40,4 @@ precisión, un 1.0 sin valor. Por eso las hacemos **solaparse como en la realida
 
 Además, cada "mando" del generador (tamaño y número de manchas, severidad de la
 clorosis, iluminación) se divide en **bandas**. Esto permite la evaluación
-honesta del documento 04: entrenar con unas bandas y probar con las **disjuntas**.
+rigurosa del documento 04: entrenar con unas bandas y probar con las **disjuntas**.

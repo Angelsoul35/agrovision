@@ -21,7 +21,7 @@ Each image is produced from an explicit set of generative knobs seeded by a
 - Data is deterministic and reproducible from a seed, with exact control over
   class balance and difficulty.
 - Because we control the generative parameters, we can hold whole parameter
-  ranges out of training for an honest generalisation test (ADR 0003) — something
+  ranges out of training for an leakage-free generalisation test (ADR 0003) — something
   a fixed real dataset does not give for free.
 - The decisive limitation: synthetic leaves are **not** field photographs. They
   lack cluttered backgrounds, occlusion, co-occurring diseases, wet/dry and

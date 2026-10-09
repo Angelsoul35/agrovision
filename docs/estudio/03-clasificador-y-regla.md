@@ -38,7 +38,7 @@ nula, así que la regla no se dispara por error (lo verificamos).
 Si la confianza del modelo está por debajo de `AV_CLASSIFIER_MIN_CONFIDENCE`, el
 veredicto se marca `needs_review`: se devuelve para que lo confirme una persona
 en vez de afirmarlo con falsa seguridad. En una herramienta que aconseja sobre
-tratar un cultivo, esa es la conducta honesta.
+tratar un cultivo, esa es la conducta correcta.
 
 ## La recomendación
 

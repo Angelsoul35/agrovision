@@ -23,7 +23,7 @@ access at any point.
   has a documented meaning, and the linear model explains each verdict by feature
   contribution.
 - Accuracy on *real* leaves will be lower than a good CNN's. That is accepted and
-  stated: the honest contribution is a transparent pipeline and an honest
+  stated: the leakage-free contribution is a transparent pipeline and a trustworthy
   evaluation, with a CNN on real imagery named as the production path.
 - The whole system runs in seconds on CPU with no assets to fetch, so it is
   trivially reproducible from a seed.

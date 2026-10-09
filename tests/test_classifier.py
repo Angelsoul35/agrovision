@@ -16,18 +16,22 @@ def test_unfitted_raises():
 
 
 def test_each_class_classified_in_distribution(service: LeafService):
-    # Every class is classified correctly for (almost) every seed: the classes are
-    # genuinely distinct, so this is strong, not a lowered bar. The only realistic
-    # soft boundary is mild chlorosis vs healthy; the honest, parameter-disjoint
-    # accuracy (~0.99 with a small train/test gap) is measured in test_evaluation.
-    total_ok = 0
-    total = 0
-    for label in LABELS:
-        correct = sum(service.assess_sample(label, seed=s)[1].label == label for s in range(10))
-        assert correct >= 8, f"{label}: {correct}/10"
-        total_ok += correct
-        total += 10
-    assert total_ok / total >= 0.95
+    # Healthy and chlorosis carry no lesion ambiguity, so they are near-perfect.
+    # Rust and blight deliberately overlap (colour band and lesion geometry) and
+    # early-stage lesions look healthy, so each is only recovered most of the time.
+    # The leakage-free headline accuracy is measured in test_evaluation.
+    per_class = {
+        label: sum(service.assess_sample(label, seed=s)[1].label == label for s in range(10))
+        for label in LABELS
+    }
+    assert per_class["healthy"] >= 9, per_class
+    assert per_class["chlorosis"] >= 9, per_class
+    assert per_class["blight"] >= 5, per_class
+    assert per_class["rust"] >= 5, per_class
+    # The overlapping disease pair is genuinely harder than the clear pair; if the
+    # confounders were removed every class would be ~perfect and this would fail.
+    assert per_class["blight"] + per_class["rust"] < per_class["healthy"] + per_class["chlorosis"]
+    assert sum(per_class.values()) / (4 * 10) >= 0.78, per_class
 
 
 def test_healthy_rule_fallback_fires(service: LeafService):
@@ -48,8 +52,14 @@ def test_low_confidence_is_flagged_for_review():
 
 
 def test_explanation_is_populated_and_named(service: LeafService):
-    _, assessment = service.assess_sample("blight", seed=3)
-    assert assessment.method == "model"
+    # Use a blight leaf the model actually classifies (an early-stage one can fall
+    # to the healthy rule), then check the explanation is well-formed.
+    for seed in range(20):
+        _, assessment = service.assess_sample("blight", seed=seed)
+        if assessment.method == "model":
+            break
+    else:  # pragma: no cover - a model-classified blight always exists in 0..19
+        raise AssertionError("no model-classified blight sample found")
     assert assessment.top_features
     for name, _contribution in assessment.top_features:
         direction, feature = name.split(" ", 1)

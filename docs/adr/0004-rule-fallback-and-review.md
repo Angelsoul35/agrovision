@@ -24,7 +24,7 @@ boundary, mild chlorosis) should not be asserted with false confidence.
 ## Consequences
 - The clear case is robust and explained by a stated rule, not a weight vector.
 - The ambiguous case is surfaced for a human instead of guessed, which is the
-  honest behaviour for a tool that advises on crop treatment.
+  rigorous behaviour for a tool that advises on crop treatment.
 - Both thresholds are operator dials: raise the confidence threshold to send more
   to review, adjust the rule thresholds to trade rule coverage against safety.
 - The rule is intentionally minimal (two features). It is a triage shortcut, not

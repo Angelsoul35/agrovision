@@ -10,10 +10,10 @@ result is reproducible from a seed.
 
 | Component    | File                       | Responsibility                                               |
 | ------------ | -------------------------- | ------------------------------------------------------------ |
-| Generator    | `agrovision/generate.py`   | Synthetic labelled leaf images; parameter-banded honest split |
+| Generator    | `agrovision/generate.py`   | Synthetic labelled leaf images; parameter-banded rigorous split |
 | Features     | `agrovision/features.py`   | Leaf segmentation + classical colour/texture features        |
 | Classifier   | `agrovision/classifier.py` | Features → health class, with rule fallback and explanation  |
-| Evaluation   | `agrovision/evaluation.py` | Honest, parameter-disjoint generalisation measurement        |
+| Evaluation   | `agrovision/evaluation.py` | Leakage-free, parameter-disjoint generalisation measurement        |
 | Service      | `agrovision/service.py`    | Orchestration + PNG/base64 edge + sample bank                |
 | HTTP API     | `agrovision/main.py`       | REST surface over the service                                |
 | CLI          | `agrovision/cli.py`        | End-to-end demo                                              |
@@ -41,7 +41,7 @@ split-of-the-same-dataset accuracy teaches nothing and hides everything. Classic
 CV forces every decision into the open: the leaf is segmented by a stated
 saturation rule, each feature is a named statistic with a documented meaning, and
 the classifier is linear so its verdicts are explained by feature contributions.
-The honest limitation — that this is a synthetic benchmark and a CNN on real
+The rigorous limitation — that this is a synthetic benchmark and a CNN on real
 imagery is the production path — is stated plainly rather than papered over by a
 big number. See ADR 0001.
 
@@ -49,7 +49,7 @@ big number. See ADR 0001.
 
 With no licensed field dataset and a hard offline constraint, the data is
 rendered. That is a real limitation, owned openly (ADR 0002), but it also buys
-something valuable for honesty: because we *control* the generative parameters,
+something valuable for rigour: because we *control* the generative parameters,
 we can hold whole parameter ranges out of training and ask the genuinely hard
 question — does the model generalise to leaf appearances it has never seen?
 

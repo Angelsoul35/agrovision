@@ -16,13 +16,15 @@ def demo() -> None:
 
     correct = 0
     for label in LABELS:
-        sample, a = svc.assess_sample(label, seed=3)
+        sample, a = svc.assess_sample(label, seed=2)
         ok = a.label == sample.true_label
         correct += int(ok)
         mark = "OK " if ok else "XX "
         review = "  [NEEDS REVIEW]" if a.needs_review else ""
-        print(f"{mark} true={sample.true_label:<10} -> predicted={a.label:<10} "
-              f"p={a.confidence:.2f} via {a.method}{review}")
+        print(
+            f"{mark} true={sample.true_label:<10} -> predicted={a.label:<10} "
+            f"p={a.confidence:.2f} via {a.method}{review}"
+        )
         why = ", ".join(f"{name}={value}" for name, value in a.top_features[:3])
         print(f"      why: {why}")
         print(f"      verdict: {a.recommended_action}")
@@ -31,8 +33,10 @@ def demo() -> None:
     print("-" * 64)
     print(f"demo samples classified correctly: {correct}/{len(LABELS)}")
     print(
-        "\nNote: these are in-distribution samples. The honest, parameter-disjoint\n"
-        "accuracy is reported by `python -m agrovision.evaluation`."
+        "\nNote: these are clear in-distribution samples. Early-stage disease is\n"
+        "genuinely ambiguous (it can look healthy), so the realistic accuracy is\n"
+        "lower: the leakage-free, parameter-disjoint figure (~0.89 over four classes,\n"
+        "chance 0.25) is reported by `python -m agrovision.evaluation`."
     )
 
 

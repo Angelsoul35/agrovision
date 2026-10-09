@@ -1,12 +1,14 @@
 # AgroVision
 
-Offline, deterministic crop-leaf health assessment from leaf images, using
-**classical computer vision** — no pretrained model, no downloads, no network.
-It renders synthetic leaves, extracts hand-defined colour and texture features,
-and classifies each leaf as `healthy`, `chlorosis` (yellowing), `blight`
-(necrotic patches) or `rust` (orange-brown spots), with an explanation and a
-recommended action. The evaluation is honest: it holds out whole parameter
-ranges so the reported number reflects real generalisation, not a memorised 1.0.
+Crop-leaf health assessment from leaf images using **classical computer vision** —
+no pretrained model, every feature hand-defined and readable. It classifies a leaf
+as `healthy`, `chlorosis` (yellowing), `blight` (necrotic patches) or `rust`
+(orange-brown spots), with an explanation and a recommended action. It is evaluated
+two ways: on a controlled synthetic generator with **overlapping classes** and a
+**parameter-disjoint** split (realistic ~0.90, not a memorised 1.0), and on **real
+field photographs** (the Makerere Beans dataset) to measure the same features on
+real imagery. The core pipeline is offline and deterministic; the real-image
+benchmark uses a small vendored subset (refreshable from Hugging Face).
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
@@ -18,11 +20,11 @@ ranges so the reported number reflects real generalisation, not a memorised 1.0.
 
 Most "AI plant doctor" demos reach for a pretrained CNN and report ~99%
 accuracy on a split of the same curated dataset — a number that says little about
-a leaf photographed in a real field. AgroVision takes the opposite, honest
-stance for a portfolio piece: it stays fully offline and deterministic, uses only
-features a plant pathologist could name and read off the leaf, and it measures
-itself on **unseen** leaf appearances. The result is a lower but *trustworthy*
-number, and a system whose every verdict can be explained and overruled.
+a leaf photographed in a real field. AgroVision takes the opposite, disciplined
+stance for a portfolio piece: it uses only features a plant pathologist could name
+and read off the leaf, it measures itself on **unseen** leaf appearances, and it
+reports the result on **real** field photos too. The numbers are lower but
+trustworthy, and every verdict can be explained and overruled.
 
 ## How it works
 
@@ -40,7 +42,7 @@ flowchart TD
 
 1. **Generator (`generate.py`).** Renders RGB leaves with NumPy: an ellipse leaf
    with veins, class-specific colouring, lesions (size/count varied), lighting
-   and noise. Disease pattern knobs are drawn from banded ranges so an honest
+   and noise. Disease pattern knobs are drawn from banded ranges so a trustworthy
    split can hold whole bands out of training.
 2. **Features (`features.py`).** Segments the leaf from the background by
    saturation (robust to lighting), then measures colour statistics (green
@@ -62,7 +64,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
 python -m agrovision.cli demo          # render one leaf per class, classify, show verdicts
-python -m agrovision.evaluation        # the honest, parameter-disjoint accuracy
+python -m agrovision.evaluation        # the leakage-free, parameter-disjoint accuracy
 uvicorn agrovision.main:app --reload   # HTTP API
 ```
 
@@ -92,44 +94,51 @@ Settings load from environment variables with the `AV_` prefix (see
 | `AV_RULE_GREEN_FRACTION`       | `0.47`  | Green fraction at/above which the healthy rule may fire  |
 | `AV_RULE_MAX_SPOT_COVERAGE`    | `0.02`  | Lesion coverage at/below which the healthy rule may fire |
 
-## Evaluation: honest generalisation, measured on unseen parameters
+## Evaluation: leakage-free generalisation, measured on unseen parameters
 
-The four classes are genuinely distinct — the colour signatures a plant
-pathologist would describe (green; yellowed; a few large **brown** necrotic
-patches; many small **orange** pustules) — so a sound classical classifier should
-separate them well. The honest question is not "can it fit the training look?"
-but "does it generalise to leaf appearances it has not seen?", and that is what
-is measured: every generation knob (lesion size, lesion count, chlorosis
-severity, lighting) is cut into interleaved bands, and `agrovision.evaluation`
-trains on one set of bands and tests on the **disjoint** bands — no test leaf's
-spot size, count, severity or lighting was ever seen in training.
+The classes **overlap on purpose**: rust and blight share a wide colour band and
+their lesion counts/sizes overlap, and every diseased leaf has a *severity* (an
+early-stage lesion is faint and sparse, close to a healthy leaf). So a share of
+leaves are genuinely ambiguous and the ceiling is well below 1.0 — rust vs blight
+is the pair that gets confused. On top of that, the evaluation is parameter-
+disjoint: every generation knob (lesion size/count, chlorosis severity, lighting)
+is cut into interleaved bands, and `agrovision.evaluation` trains on one set of
+bands and tests on the **disjoint** bands, so no test leaf's size, count, severity
+or lighting was seen in training.
 
 ```
 $ python -m agrovision.evaluation
-  accuracy (mean+/-std over 5 seeds): 0.99 +/- 0.01   # four classes; chance ~0.25; parameters unseen in training
-  macro-F1 (mean over 5 seeds)      : 0.99
-  train accuracy                      : 1.00
-  train-test gap                      : 0.01   # ~0 -> real generalisation, not a memorised synthetic look
+  accuracy (mean+/-std over 5 seeds): 0.90 +/- 0.03   # four classes; chance ~0.25; parameters unseen in training
+  macro-F1 (mean over 5 seeds)      : 0.89
+  train accuracy                      : 0.86
+  train-test gap                      : -0.04   # ~0 -> learns features, not a fixed synthetic look
 ```
 
-What this number does and does not claim, stated plainly:
+The ~0.90 is realistic, not a suspicious 1.0, and the near-zero train/test gap
+shows it is not overfitting either: the model learned the colour/geometry of each
+disease on parameter bands it never saw. (Remove the overlapping confounders and
+the accuracy jumps straight back to 1.0 — a regression test guards against that.)
 
-- The honesty is **not** an accuracy cap — it is the **near-zero train/test gap on
-  disjoint parameters**. A high score *with* a ~0.01 gap on sizes/counts it never
-  saw means the model learned the colour/geometry of each disease, not a fixed
-  synthetic look. (A high score with a *large* gap would be the memorisation trap;
-  this is the opposite.) The command averages over several seeds so the figure is
-  robust rather than one lucky split.
-- It does **not** claim field-ready performance. This is a **synthetic
-  benchmark**: real leaves bring occlusion, soil and sky background, wet/dry
-  variation, mixed and co-occurring diseases, and camera differences that no
-  renderer captures — the problem is genuinely harder there. A production system
-  would train a CNN on **real, labelled field imagery** and report against that,
-  treating this held-out score as the baseline to beat, not the ceiling.
+### Validated on real leaf images
 
-Because the model can be wrong, low-confidence verdicts are routed to review, and
-the clearly-healthy leaf is handled by a stated deterministic rule rather than a
-weight vector.
+The synthetic set gives a controlled, 4-class, parameter-disjoint measurement; the
+real **Makerere Beans** dataset (180 field photos, vendored under `datasets/beans/`)
+checks the same features on real imagery. `python -m agrovision.real_benchmark`:
+
+```
+model                    CV accuracy        train    test     gap
+Logistic (regularised)   0.672 +/- 0.051     0.733   0.711   0.022
+Random forest            0.667 +/- 0.046     1.000   0.667   0.333   # memorises, no CV gain
+```
+
+On real leaves the hand-defined features reach ~0.67 (3 classes, chance 0.33) with
+a well-fit logistic model; enriching to 66 features (HSV histograms, LBP and GLCM
+texture) and an RBF-SVM reaches only ~0.72. That is the ceiling of interpretable
+features on real field variation — the case for a learned CNN
+([ADR-0001](docs/adr/0001-classical-cv-not-pretrained-cnn.md)), which this baseline
+exists to be measured against. Because the model can be wrong, low-confidence
+verdicts are routed to review and the clearly-healthy leaf is handled by a stated
+deterministic rule.
 
 ## Testing
 
@@ -138,11 +147,12 @@ ruff check agrovision tests
 pytest --cov=agrovision --cov-report=term-missing --cov-fail-under=80
 ```
 
-The suite covers the feature extraction (one assertion per class signature, the
-leaf/lesion masks and the HSV conversion), the classifier (each class, the
-healthy rule fallback, low-confidence review, the explanation), the honest
-held-out thresholds with a bounded gap (and an assertion that the accuracy is
-*not* a leaky ~1.0), the HTTP API, and the CLI demo.
+The suite covers the feature extraction, the classifier (each class, the healthy
+rule fallback, low-confidence review, the explanation), the parameter-disjoint
+held-out accuracy (with a regression guard that fails if the overlapping
+confounders are removed and the score returns to ~1.0, mutation-proven), the
+**real-image benchmark** (the Beans loader, the well-fit logistic vs overfitting
+forest, and a shuffled-label collapse to chance), the HTTP API, and the CLI demo.
 
 ## Documentation
 
@@ -153,7 +163,7 @@ held-out thresholds with a bounded gap (and an assertion that the accuracy is
 ## A note on scope
 
 AgroVision is a reference implementation, not a field diagnostic tool. It
-demonstrates a clean, explainable classical-CV pipeline with an honest
+demonstrates a clean, explainable classical-CV pipeline with a trustworthy
 evaluation. A production system would be trained and evaluated on real labelled
 field photographs with a convolutional network, add proper leaf segmentation for
 cluttered scenes, handle multiple co-occurring diseases and severity grading, and
