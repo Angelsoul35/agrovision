@@ -28,15 +28,19 @@ generator remains the 4-class, fully-controlled evaluation.
 ### What the real benchmark shows
 
 `python -m agrovision.real_benchmark` extracts the **same** classical colour/texture
-features used on synthetic leaves and trains on these real photos. The result is
-**~0.67 accuracy** (3 classes, chance 0.33) with a well-fit logistic model (small
-train/test gap), while an unregularised random forest overfits (train ≈ 1.0, large
-gap) for no cross-validated gain — the same lesson as on tabular data.
+features used on synthetic leaves and trains on these real photos. The result is a
+working, fully interpretable classifier: **~0.67 accuracy** (3 classes, chance 0.33)
+with a well-fit logistic model (small train/test gap), where every verdict still
+names the features that drove it. An unregularised random forest overfits (train ≈
+1.0, large gap) for no cross-validated gain — so the regularised logistic model is
+the right choice here, the same lesson as on tabular data.
 
-That ~0.70 is the **ceiling of hand-defined features on real leaves**, not a tuning
-miss: enriching the vector to 66 features (HSV histograms, Local Binary Patterns and
-grey-level co-occurrence texture) and switching to an RBF-SVM reaches only ~0.72.
-Real field variation (background, lighting, overlapping symptoms) is what a learned
-convolutional representation captures and hand features do not — which is precisely
-the production path argued in `docs/adr/0001-classical-cv-not-pretrained-cnn.md`.
-This benchmark is the interpretable, offline baseline a CNN must beat.
+The ~0.70 reflects a deliberate **interpretability trade-off**, not a tuning miss:
+enriching the vector to 66 features (HSV histograms, Local Binary Patterns, grey-level
+co-occurrence texture) and switching to an RBF-SVM reaches only ~0.72, so the simple
+readable features are not leaving much on the table. A convolutional network would
+score higher by learning its own features, but it gives up the per-feature
+explanation an agronomist can check and overrule — which is exactly why this project
+chooses classical CV (`docs/adr/0001-classical-cv-not-pretrained-cnn.md`). This is
+the interpretable, offline baseline; a CNN is the accuracy-first alternative, not a
+verdict that this one is unusable.

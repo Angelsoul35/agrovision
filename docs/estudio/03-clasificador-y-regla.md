@@ -33,6 +33,15 @@ explicable como **regla declarada**. Los umbrales tienen margen: ninguna clase
 enferma del benchmark alcanza esa fracción de verde con cobertura de lesión casi
 nula, así que la regla no se dispara por error (lo verificamos).
 
+**Ejemplo trabajado (salida real del demo).** Una hoja sana presenta
+`green_fraction = 0.484 (≥ 0.47)` y `spot_coverage = 0.002 (≤ 0.02)` → la regla
+dispara: *healthy, por regla, confianza 1.0*, sin consultar el modelo. Una hoja con
+tizón temprano y pocas lesiones tenues puede tener `green_fraction = 0.547` pero
+`spot_coverage` por encima del umbral, o al revés: entonces **no** cae en la regla y
+pasa al modelo, que pondera color + geometría. Así, el caso obvio es barato y a
+prueba de deriva, y el caso dudoso recibe el razonamiento completo (y, si la
+confianza es baja, va a revisión humana).
+
 ## Cuando el modelo no está seguro → revisión
 
 Si la confianza del modelo está por debajo de `AV_CLASSIFIER_MIN_CONFIDENCE`, el

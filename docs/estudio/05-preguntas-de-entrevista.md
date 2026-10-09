@@ -3,12 +3,14 @@
 Preguntas típicas sobre este proyecto y cómo responderlas.
 
 ### "¿Por qué visión clásica y no una CNN preentrenada?"
-Por la restricción (offline, determinista, sin descargas) y por el objetivo de
-portafolio: demostrar que entiendo el problema, no importar los pesos de otro.
-Una CNN batiría a estos features en hojas reales, y lo digo abiertamente; pero la
-visión clásica hace cada decisión explícita y explicable (segmentación por regla,
-features con significado, modelo lineal). La CNN sobre datos reales es el camino a
-producción, lo dejo escrito (ADR 0001).
+Es una decisión de diseño, no una carencia. La visión clásica hace **cada decisión
+explícita y explicable**: segmentación por regla, features con significado agronómico
+(fracción verde, índice de amarilleo, cobertura y geometría de lesiones, textura) y un
+modelo lineal cuyos pesos se leen. Un agrónomo ve *por qué* se marcó una hoja y puede
+revocarlo — en una herramienta que aconseja tratar un cultivo, eso vale. El núcleo es
+offline y determinista; el benchmark real usa un subconjunto pequeño vendoreado. Una
+CNN daría más accuracy aprendiendo sus propios rasgos, a cambio de esa explicabilidad:
+es el camino "accuracy primero" (ADR 0001), un trade-off, no que esto no sirva.
 
 ### "¿No es un problema que los datos sean sintéticos?"
 El sintético da algo valioso: como controlo los parámetros, reservo rangos enteros
@@ -25,8 +27,10 @@ tenue y se parece a una hoja sana). Y lo que prueba que **tampoco** sobreajusta 
 cantidades, severidad, iluminación nunca vistos), promediado en varias semillas. No es
 que lisie las clases: sana y clorosis siguen casi perfectas; la confusión es roya↔tizón,
 donde un agrónomo también duda. Si quito los confundidores, vuelve a 1.0 — y un test de
-mutación falla si eso pasa. Sobre hojas reales (Beans) los rasgos a mano llegan a ~0.67
-(azar 0.33): ese es el techo de los rasgos interpretables, y el argumento para una CNN.
+mutación falla si eso pasa. Sobre hojas reales (Beans) los rasgos a mano dan un
+clasificador usable y explicable a ~0.67 (azar 0.33); una CNN marcaría más alto pero
+pierde la explicación por rasgo — es un trade-off de interpretabilidad, no que el
+pipeline no sirva.
 
 ### "¿Qué pasa cuando el modelo no está seguro?"
 Si la confianza baja del umbral, el veredicto va a **revisión humana** en vez de
@@ -49,5 +53,6 @@ multiplicar los canales, así que la segmentación aguanta la luz.
 ### "¿Qué harías para llevarlo a producción?"
 Entrenar y evaluar con **fotos reales de campo etiquetadas** usando una CNN;
 añadir segmentación real de hoja para escenas con fondo; manejar **varias
-enfermedades a la vez** y grados de severidad; y medir contra ese test real,
-tomando este score held-out como la base a superar, no como el techo.
+enfermedades a la vez** y grados de severidad. Son **extensiones** que construyen
+sobre lo que ya funciona aquí: el pipeline interpretable, la evaluación sin fuga y
+el benchmark real son la base sólida desde la que se crece.

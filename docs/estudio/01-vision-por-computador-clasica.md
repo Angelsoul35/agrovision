@@ -1,13 +1,16 @@
 # 01 — Visión por computador clásica
 
-## Por qué sin redes neuronales
+## Por qué visión clásica (una decisión de diseño)
 
-Lo "fácil" sería coger una red convolucional (CNN) preentrenada y afinarla. Pero
-el proyecto tiene una restricción dura: **sin descargas, sin red, determinista**.
-Y, sobre todo, un objetivo de portafolio: demostrar que entiendo el problema, no
-importar el conocimiento de otro. Una CNN preentrenada haría que la precisión
-fuera una propiedad del dataset ajeno, no de mi trabajo. Por eso usamos **visión
-clásica**: cada paso es una decisión explícita y explicable.
+Lo "fácil" sería afinar una CNN preentrenada. Aquí se elige a propósito **visión
+clásica** por dos razones que un reclutador valora: (1) **explicabilidad** — en una
+herramienta que aconseja tratar un cultivo, cada veredicto debe poder leerse y
+revocarse, y una CNN es una caja negra; (2) **dominio del problema** — construir las
+features a mano demuestra que entiendo *qué* distingue una enfermedad de otra, no solo
+que sé llamar a `model.fit`. El núcleo corre offline y determinista; el benchmark con
+fotos reales usa un subconjunto pequeño vendoreado. Una CNN daría más accuracy
+aprendiendo sus propios rasgos — es la alternativa "accuracy primero", un trade-off
+consciente, no una carencia de este diseño.
 
 ## Segmentar la hoja del fondo
 
@@ -38,3 +41,32 @@ Sobre los píxeles de hoja calculamos estadísticos con significado:
 
 Cada feature es una línea de código que un agrónomo podría entender. Esa es la
 gracia de la visión clásica: nada es una caja negra.
+
+## Ejemplo trabajado: los features sobre hojas reales
+
+Para ver que estos rasgos **capturan señal de verdad**, estas son las medias de
+tres de ellos sobre las fotos reales del dataset Beans (30 hojas por clase):
+
+| Clase (real) | `green_fraction` | `spot_coverage` | `n_spots` |
+|---|---|---|---|
+| healthy (sana) | 0.421 | 0.171 | 5.2 |
+| bean_rust (roya) | 0.387 | 0.274 | 7.6 |
+| angular_leaf_spot | 0.418 | 0.326 | 8.7 |
+
+La lectura es directa y es la que usa el clasificador: a medida que la hoja enferma,
+la **cobertura de lesión** sube (0.17 → 0.27 → 0.33) y el **número de componentes de
+lesión** crece (5 → 8 → 9), mientras la fracción de verde baja un poco. No es una
+separación perfecta —en hojas reales las sombras, nervios y el fondo elevan algo la
+cobertura incluso en una hoja sana, por eso `spot_coverage` sana no es 0—, pero la
+**tendencia relativa** es real y es la que da los ~0.67 de accuracy. Ahí se ve, con
+números, por qué un rasgo *con significado* funciona: no hace falta una caja negra
+para que la cobertura y el conteo de lesiones ordenen las clases.
+
+## Ejemplo trabajado: por qué una roya es una roya
+
+Para una roya sintética que el modelo clasifica (`p=0.91`), los rasgos que más la
+empujan a esa clase son: **`high mean_saturation` (1.55)**, `high mean_hue` (0.75),
+`high n_spots` (0.73), `high brown_index` (0.17). Se lee como lo diría un patólogo: la
+roya es **saturada y anaranjada** (hue/saturación altos), con **muchas** pústulas
+(n_spots alto) de color lesión (brown_index). La explicación no es un adorno: es la
+misma combinación de color + geometría con la que se definió la clase.

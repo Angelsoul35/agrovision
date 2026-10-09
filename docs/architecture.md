@@ -61,12 +61,13 @@ memorised the fixed synthetic look would score high. So the split is
 **parameter-disjoint** — each generation knob (lesion size, count, chlorosis
 severity, lighting) is cut into interleaved bands, training draws from one set and
 testing from the disjoint complement, so no test leaf's lesion size, count,
-severity or lighting was seen in training. The classes themselves are genuinely
-distinct (as real rust, blight, chlorosis and healthy tissue are), so the model
-scores ~0.99 — but the figure that makes that *trustworthy* is the **near-zero
-train/test gap on unseen parameters**: a high score with a tiny gap is real
-generalisation, a high score with a large gap would be the memorisation trap. See
-ADR 0003.
+severity or lighting was seen in training. The classes deliberately overlap where
+they do in the field (rust vs blight colour and geometry, early-stage lesions near
+healthy), so the model scores a realistic **~0.90**, not 1.0 — and the figure that
+makes that *trustworthy* is the **near-zero train/test gap on unseen parameters**: a
+realistic score with a tiny gap is real generalisation, while a large gap would be
+the memorisation trap. The same features are also benchmarked on **real** leaf photos
+(`agrovision.real_benchmark`, ~0.67 on three real classes). See ADR 0003.
 
 ## Why a rule sits in front of the model
 

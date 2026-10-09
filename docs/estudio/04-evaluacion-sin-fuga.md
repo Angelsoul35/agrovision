@@ -55,14 +55,17 @@ Logística (regularizada)  0.672 ± 0.051     0.733   0.711   0.022
 Random forest             0.667 ± 0.046     1.000   0.667   0.333   # memoriza, sin ganancia
 ```
 
-Sobre hojas reales los rasgos a mano llegan a ~0.67 (3 clases, azar 0.33) con un
-modelo logístico bien ajustado; enriquecer a 66 rasgos (histogramas HSV, LBP y
-textura GLCM) y usar un SVM-RBF solo alcanza ~0.72. Ese es el **techo de los rasgos
-interpretables** sobre variación real de campo — justo el argumento para una CNN
-([ADR-0001](../adr/0001-classical-cv-not-pretrained-cnn.md)), que este baseline
-existe para que una CNN lo supere. El random forest, sin regularizar, memoriza las
-180 imágenes (train ~1.0) sin ganar nada en validación cruzada: la misma lección de
-"más capacidad no es mejor" que en datos tabulares.
+Sobre hojas reales los rasgos a mano dan un clasificador **usable y totalmente
+explicable**: ~0.67 (3 clases, azar 0.33) con un logístico bien ajustado, y cada
+veredicto sigue nombrando los rasgos que lo motivaron. Enriquecer a 66 rasgos
+(histogramas HSV, LBP, textura GLCM) y un SVM-RBF solo llega a ~0.72, así que los
+rasgos simples y legibles no dejan mucho sobre la mesa. Una CNN marcaría más alto
+aprendiendo sus propios rasgos, pero pierde esa explicación por rasgo que un agrónomo
+revisa y puede revocar — es el **trade-off de interpretabilidad** que este proyecto
+elige a propósito ([ADR-0001](../adr/0001-classical-cv-not-pretrained-cnn.md)), no un
+veredicto de que el pipeline no sirva. El random forest, sin regularizar, memoriza
+las 180 imágenes (train ~1.0) sin ganar nada en validación cruzada: la misma lección
+de "más capacidad no es mejor".
 
 ## Dónde caen los errores
 

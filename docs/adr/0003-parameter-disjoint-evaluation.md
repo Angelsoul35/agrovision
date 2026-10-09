@@ -33,11 +33,13 @@ methodology, not through artificial ambiguity:
    seeds so it is robust.
 
 ## Consequences
-- The reported accuracy (~0.99 ± 0.01, macro-F1 ~0.99) is high because the problem
+- The reported accuracy (~0.90 ± 0.03, macro-F1 ~0.89) is realistic because the classes overlap
   is genuinely separable — and it is **trustworthy because the train/test gap is
-  ~0.01 on unseen parameters**. The gap, not an accuracy ceiling, is the leakage-freey
-  signal: a high score with a near-zero gap is real generalisation; a high score
+  ~0 on unseen parameters**. The gap, not the absolute score, is the trustworthy
+  signal: a realistic score with a near-zero gap is real generalisation; a high score
   with a large gap would be the memorisation trap.
-- It remains a synthetic benchmark. The rigorous baseline to beat in production is
-  this held-out score measured against **real** labelled field imagery, never a
-  within-distribution number.
+- The synthetic measurement is complemented by a **real-image benchmark** on the
+  Makerere Beans dataset (`agrovision.real_benchmark`): the same features on real
+  field photos, scored held-out. The leakage-free synthetic figure and the real
+  figure together describe the system — reported against unseen parameters and real
+  leaves, never a within-distribution number.

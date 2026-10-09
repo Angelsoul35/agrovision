@@ -23,8 +23,8 @@ accuracy on a split of the same curated dataset — a number that says little ab
 a leaf photographed in a real field. AgroVision takes the opposite, disciplined
 stance for a portfolio piece: it uses only features a plant pathologist could name
 and read off the leaf, it measures itself on **unseen** leaf appearances, and it
-reports the result on **real** field photos too. The numbers are lower but
-trustworthy, and every verdict can be explained and overruled.
+works on **real** field photos too. The numbers are realistic and every verdict
+can be explained and overruled — an interpretable system you can trust and audit.
 
 ## How it works
 
@@ -99,7 +99,7 @@ Settings load from environment variables with the `AV_` prefix (see
 The classes **overlap on purpose**: rust and blight share a wide colour band and
 their lesion counts/sizes overlap, and every diseased leaf has a *severity* (an
 early-stage lesion is faint and sparse, close to a healthy leaf). So a share of
-leaves are genuinely ambiguous and the ceiling is well below 1.0 — rust vs blight
+leaves are genuinely ambiguous, so the accuracy is realistically below 1.0 — rust vs blight
 is the pair that gets confused. On top of that, the evaluation is parameter-
 disjoint: every generation knob (lesion size/count, chlorosis severity, lighting)
 is cut into interleaved bands, and `agrovision.evaluation` trains on one set of
@@ -131,14 +131,16 @@ Logistic (regularised)   0.672 +/- 0.051     0.733   0.711   0.022
 Random forest            0.667 +/- 0.046     1.000   0.667   0.333   # memorises, no CV gain
 ```
 
-On real leaves the hand-defined features reach ~0.67 (3 classes, chance 0.33) with
-a well-fit logistic model; enriching to 66 features (HSV histograms, LBP and GLCM
-texture) and an RBF-SVM reaches only ~0.72. That is the ceiling of interpretable
-features on real field variation — the case for a learned CNN
-([ADR-0001](docs/adr/0001-classical-cv-not-pretrained-cnn.md)), which this baseline
-exists to be measured against. Because the model can be wrong, low-confidence
-verdicts are routed to review and the clearly-healthy leaf is handled by a stated
-deterministic rule.
+On real leaves the hand-defined features give a working, fully explainable
+classifier at ~0.67 (3 classes, chance 0.33) with a well-fit logistic model —
+every verdict still names the features behind it. Enriching to 66 features (HSV
+histograms, LBP, GLCM texture) and an RBF-SVM reaches only ~0.72, so the simple
+readable features aren't leaving much on the table. A CNN would score higher by
+learning its own features, at the cost of that per-feature explanation — the
+interpretability trade-off this project makes on purpose
+([ADR-0001](docs/adr/0001-classical-cv-not-pretrained-cnn.md)). Because any model
+can be wrong, low-confidence verdicts are routed to review and the clearly-healthy
+leaf is handled by a stated deterministic rule.
 
 ## Testing
 

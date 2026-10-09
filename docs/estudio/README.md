@@ -25,5 +25,5 @@ textura, sin modelos preentrenados), que clasifica una hoja en sana, clorosis, t
 (*blight*) o roya (*rust*), da una explicación y una recomendación. Se evalúa de dos
 formas: **sin fuga de datos** sobre un generador sintético con clases que se solapan
 (≈0.90, no un 1.0), y sobre **fotos reales de campo** (dataset Makerere Beans) con
-`python -m agrovision.real_benchmark` (≈0.67, el techo de los rasgos a mano). El
+`python -m agrovision.real_benchmark` (≈0.67, lo que dan los rasgos a mano, 100% explicable). El
 documento [04](04-evaluacion-sin-fuga.md) explica ambos números.
